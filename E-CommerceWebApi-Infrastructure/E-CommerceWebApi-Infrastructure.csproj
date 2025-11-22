@@ -26,4 +26,8 @@
     <ProjectReference Include="..\E-CommerceWebApi-Core\E-CommerceWebApi-Core.csproj" />
   </ItemGroup>
 
+  <ItemGroup>
+    <Folder Include="Data\SeedData\" />
+  </ItemGroup>
+
 </Project>
