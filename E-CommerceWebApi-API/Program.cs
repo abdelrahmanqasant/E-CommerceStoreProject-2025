@@ -20,6 +20,7 @@ namespace E_CommerceWebApi_API
                 options.UseSqlServer(builder.Configuration.GetConnectionString("defaultConnectionString"));
             });
             builder.Services.AddScoped<IProductRepository, ProductRepository>();    
+            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));    
 
             var app = builder.Build();
 
@@ -31,19 +32,19 @@ namespace E_CommerceWebApi_API
 
             app.MapControllers();
 
-            try
-            {
-                using var scope = app.Services.CreateScope();
-                var services = scope.ServiceProvider;
-                var context = services.GetRequiredService<StoreContext>();
-                await context.Database.MigrateAsync();
-                await StoreContextSeed.SeedAsync(context);
-            }
-            catch (Exception ex)
-            {
-                Console.WriteLine(ex);
-                throw;
-            }
+            //try
+            //{
+            //    using var scope = app.Services.CreateScope();
+            //    var services = scope.ServiceProvider;
+            //    var context = services.GetRequiredService<StoreContext>();
+            //    await context.Database.MigrateAsync();
+            //    await StoreContextSeed.SeedAsync(context);
+            //}
+            //catch (Exception ex)
+            //{
+            //    Console.WriteLine(ex);
+            //    throw;
+            //}
 
 
             app.Run();
