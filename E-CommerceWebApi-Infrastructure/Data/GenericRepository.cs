@@ -10,41 +10,61 @@ using System.Threading.Tasks;
 
 namespace E_CommerceWebApi_Infrastructure.Data
 {
-    public class GenericRepository<T>(StoreContext context) : IGenericRepository<T> where T : BaseEntity
+    public class GenericRepository<T>(StoreContext _context) : IGenericRepository<T> where T : BaseEntity
     {
+
+        protected readonly DbSet<T> _dbSet = _context.Set<T>();
+
+
         public void Add(T entity)
         {
-            context.Set<T>().Add(entity);
+            _dbSet.Add(entity);
         }
 
         public bool Exists(int id)
         {
-           return context.Set<T>().Any(x=>x.Id ==id);
+            return _dbSet.Any(x => x.Id == id);
         }
 
-        public async Task<T> GetByIdAsync(int id)
+      
+
+        public async Task<T?> GetByIdAsync(int id)
         {
-            return await context.Set<T>().FindAsync(id) ;
+            return await _dbSet.FindAsync(id);
         }
 
-        public async Task<T?> GetEntityWithSpec(ISpecification<T> spec)
-        {
-            return await ApplySpecification(spec).FirstOrDefaultAsync() ;
-        }
-
-        public async Task<TResult?> GetEntityWithSpec<TResult>(ISpecification<T, TResult> spec)
-        {
-            return await ApplySpecification(spec).FirstOrDefaultAsync(); 
-        }
-
-        public async Task<IReadOnlyList<T>> ListAllAsync()
-        {
-           return await context.Set<T>().ToListAsync();
-        }
-
-        public async Task<IReadOnlyList<T>> ListAsync(ISpecification<T> spec)
+        public async Task<IReadOnlyList<T?>> ListAsync(ISpecification<T> spec)
         {
             return await ApplySpecification(spec).ToListAsync();
+        }
+
+        public void Remove(T entity)
+        {
+            _dbSet.Remove(entity);
+        }
+
+        public async Task<bool> SaveAllAsync()
+        {
+            return await _context.SaveChangesAsync() > 0;
+        }
+
+        public void Update(T entity)
+        {
+            _dbSet.Update(entity);
+        }
+        public IQueryable<T> ApplySpecification(ISpecification<T> spec)
+        {
+            return SpecificationEvaluator<T>.GetQuery(_dbSet.AsQueryable(), spec);
+        }
+
+        public async Task<T?> GetEntityWithSpecification(ISpecification<T> spec)
+        {
+            return await ApplySpecification(spec).FirstOrDefaultAsync();
+        }
+
+        public async Task<TResult?> GetEntityWithSpecification<TResult>(ISpecification<T, TResult> spec)
+        {
+            return await ApplySpecification(spec).FirstOrDefaultAsync();
         }
 
         public async Task<IReadOnlyList<TResult>> ListAsync<TResult>(ISpecification<T, TResult> spec)
@@ -52,28 +72,15 @@ namespace E_CommerceWebApi_Infrastructure.Data
             return await ApplySpecification(spec).ToListAsync();
         }
 
-        public void Remove(T entity)
+        public Task<int> CountAsync(ISpecification<T> spec)
         {
-            context.Set<T>().Remove(entity);
-        }
-
-        public async Task<bool> SaveAllAsync()
-        {
-            return await context.SaveChangesAsync() > 0;
-        }
-
-        public void Update(T entity)
-        {
-            context.Set<T>().Attach(entity);
-            context.Entry(entity).State = EntityState.Modified;
-        }
-        private IQueryable<T> ApplySpecification(ISpecification<T> spec)
-        {
-            return SpecificationEvaluator<T>.GetQuery(context.Set<T>().AsQueryable(),spec);
+            var query = _dbSet.AsQueryable();
+            query = spec.ApplyCriteria(query);
+            return query.CountAsync();
         }
         private IQueryable<TResult> ApplySpecification<TResult>(ISpecification<T, TResult> spec)
         {
-            return SpecificationEvaluator<T>.GetQuery<T,TResult>(context.Set<T>().AsQueryable(),spec);
+            return SpecificationEvaluator<T>.GetQuery(_dbSet.AsQueryable(), spec);
         }
     }
 }

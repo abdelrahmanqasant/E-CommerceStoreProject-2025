@@ -15,61 +15,60 @@ namespace E_CommerceWebApi_Infrastructure.Data
         {
             context.Products.Add(product);
         }
-
         public void DeleteProduct(Product product)
         {
-           context.Products.Remove(product);
+            context.Products.Remove(product);
         }
 
         public async Task<IReadOnlyList<string>> GetBrandsAsync()
         {
-           return await context.Products.Select(x=>x.Brand).Distinct().ToListAsync();
+            return await context.Products.AsNoTracking().Select(x => x.Brand).Distinct().ToListAsync();
         }
 
         public async Task<Product?> GetProductByIdAsync(int id)
         {
-             return  await context.Products.FindAsync(id);
+            return await context.Products.AsNoTracking().FirstOrDefaultAsync(x => x.Id == id);
         }
 
-        public async Task<IReadOnlyList<Product?>> GetProductsAsync(string? brand, string? type, string? sort)
+        public async Task<IReadOnlyList<Product?>> GetProducts(string? brand, string? type, string? sort)
         {
-            var query = context.Products.AsQueryable();
-
-            if(!string.IsNullOrWhiteSpace(brand))
-                query = query.Where(x=>
-                string.Equals(x.Brand , brand , StringComparison.OrdinalIgnoreCase)) ;
+            var query = context.Products.AsQueryable().AsNoTracking();
+            if (!string.IsNullOrWhiteSpace(brand))
+                query = query.Where(x => x.Brand.ToLower() == brand.ToLower());
             if (!string.IsNullOrWhiteSpace(type))
-                query = query.Where(x =>
-                string.Equals(x.Type, type, StringComparison.OrdinalIgnoreCase));
-               
+                query = query.Where(x => x.Type.ToLower() == type.ToLower());
+
             query = (sort?.ToLower()) switch
             {
                 "priceasc" => query.OrderBy(x => x.Price),
                 "pricedesc" => query.OrderByDescending(x => x.Price),
-                _ => query.OrderBy(x => x.Name)
+                _ => query.OrderBy(x => x.Name ?? ""),
             };
 
-          return await query.ToListAsync();
+            return await query.ToListAsync();
+
+
         }
 
         public async Task<IReadOnlyList<string>> GetTypesAsync()
         {
-            return await context.Products.Select(x => x.Type).Distinct().ToListAsync();
+            return await context.Products.AsNoTracking().Select(x => x.Type).Distinct().ToListAsync();
         }
 
-        public bool ProductExists(int id)
-        {
-            return context.Products.Any(product=>product.Id == id);
-        }
+
 
         public async Task<bool> SaveChangesAsync()
         {
-           return await context.SaveChangesAsync() > 0;
+            return await context.SaveChangesAsync() > 0;
         }
 
         public void UpdateProduct(Product product)
         {
-           context.Entry(product).State = EntityState.Modified;
+            context.Products.Update(product);
+        }
+        public Task<bool> ProductExists(int id)
+        {
+            return context.Products.AnyAsync(x => x.Id == id);
         }
     }
 }
