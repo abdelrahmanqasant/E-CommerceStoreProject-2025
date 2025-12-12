@@ -1,4 +1,5 @@
 
+using E_CommerceWebApi_API.Middlewares;
 using E_CommerceWebApi_Core.Repositories;
 using E_CommerceWebApi_Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -20,10 +21,15 @@ namespace E_CommerceWebApi_API
                 options.UseSqlServer(builder.Configuration.GetConnectionString("defaultConnectionString"));
             });
             builder.Services.AddScoped<IProductRepository, ProductRepository>();    
-            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));    
+            builder.Services.AddScoped(typeof(IGenericRepository<>), typeof(GenericRepository<>));
+            builder.Services.AddCors();
 
             var app = builder.Build();
 
+            app.UseMiddleware<ExceptionMiddleware>();
+
+            app.UseCors(x => x.AllowAnyHeader().AllowAnyMethod()
+            .WithOrigins("http://localhost:4200","https://localhost:4200"));
 
             app.UseAuthentication();
 

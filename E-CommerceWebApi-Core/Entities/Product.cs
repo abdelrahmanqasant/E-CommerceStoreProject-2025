@@ -22,11 +22,5 @@ namespace E_CommerceWebApi_Core.Entities
         public required string Brand { get; set; }
         public int QuantityInStock { get; set; }
 
-
-
-
-
-
-
     }
 }
